@@ -2,7 +2,7 @@ apply plugin: 'java-library'
 apply plugin: 'maven'
 
 group = 'net.ellerton.japng'
-version = '1.0.0'
+version = '1.2.0'
 
 sourceCompatibility = 1.8 // java 8
 targetCompatibility = 1.8
@@ -38,7 +38,7 @@ install {
 	  licenses {
 		license {
 		  name = "MIT"
-		  url = "https://github.com/aellerton/japng/blob/master/LICENSE.txt"
+		  url = "https://raw.githubusercontent.com/ROMVoid95/apng4j/master/LICENSE"
 		  distribution = "repo"
 		}
 	  }
