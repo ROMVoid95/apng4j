@@ -1,0 +1,73 @@
+package net.ellerton.japng.argb8888;
+
+import net.ellerton.japng.PngScanlineBuffer;
+import net.ellerton.japng.chunks.PngAnimationControl;
+import net.ellerton.japng.chunks.PngFrameControl;
+import net.ellerton.japng.chunks.PngHeader;
+import net.ellerton.japng.error.PngException;
+
+/**
+ * ArgbBitmapSequenceDirector instances direct an ArgbProcessor to build all frames
+ * of an animation into an ArgbBitmapSequence object.
+ */
+public class Argb8888BitmapSequenceDirector extends BasicArgb8888Director<Argb8888BitmapSequence> {
+	Argb8888BitmapSequence bitmapSequence = null;
+	PngFrameControl currentFrame = null;
+	private PngHeader header;
+
+	@Override
+	public void receiveHeader(PngHeader header, PngScanlineBuffer buffer) throws PngException {
+		this.header = header;
+		this.bitmapSequence = new Argb8888BitmapSequence(header);
+		this.scanlineProcessor = Argb8888Processors.from(header, buffer, this.bitmapSequence.defaultImage);
+	}
+
+	@Override
+	public boolean wantDefaultImage() {
+		return true;
+	}
+
+	@Override
+	public boolean wantAnimationFrames() {
+		return true;
+	}
+
+	@Override
+	public Argb8888ScanlineProcessor beforeDefaultImage() {
+		return scanlineProcessor;
+	}
+
+	@Override
+	public void receiveDefaultImage(Argb8888Bitmap bitmap) {
+		this.bitmapSequence.receiveDefaultImage(bitmap);
+	}
+
+	@Override
+	public void receiveAnimationControl(PngAnimationControl control) {
+		this.bitmapSequence.receiveAnimationControl(control);
+	}
+
+	@Override
+	public Argb8888ScanlineProcessor receiveFrameControl(PngFrameControl control) {
+		currentFrame = control;
+
+		return scanlineProcessor.cloneWithNewBitmap(header.adjustFor(control)); // TODO: is this going to be a problem?
+	}
+
+	@Override
+	public void receiveFrameImage(Argb8888Bitmap bitmap) {
+		if (null == currentFrame) {
+			throw new IllegalStateException("Received a frame image with no frame control in place");
+		}
+		if (null == bitmapSequence.animationFrames) {
+			throw new IllegalStateException("Received a frame image without animation control (or frame list?) in place");
+		}
+		bitmapSequence.animationFrames.add(new Argb8888BitmapSequence.Frame(currentFrame, bitmap));
+		currentFrame = null;
+	}
+
+	@Override
+	public Argb8888BitmapSequence getResult() {
+		return bitmapSequence;
+	}
+}
